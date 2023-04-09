@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "lcd.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,6 +58,25 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+
+static void LED_Blink(uint32_t Hdelay,uint32_t Ldelay)
+{
+	HAL_GPIO_WritePin(E3_GPIO_Port,E3_Pin,GPIO_PIN_SET);
+	HAL_Delay(Hdelay - 1);
+	HAL_GPIO_WritePin(E3_GPIO_Port,E3_Pin,GPIO_PIN_RESET);
+	HAL_Delay(Ldelay-1);
+}
+
+
+static void RTC_CalendarShow(RTC_DateTypeDef *sdatestructureget,RTC_TimeTypeDef *stimestructureget)
+{
+  /* ±ØÐëÍ¬Ê±»ñÈ¡Ê±¼äºÍÈÕÆÚ ²»È»»áµ¼ÖÂÏÂ´ÎRTC²»ÄÜ¶ÁÈ¡ */
+  /* Both time and date must be obtained or RTC cannot be read next time */
+  /* Get the RTC current Time */
+  HAL_RTC_GetTime(&hrtc, stimestructureget, RTC_FORMAT_BIN);
+  /* Get the RTC current Date */
+  HAL_RTC_GetDate(&hrtc, sdatestructureget, RTC_FORMAT_BIN);
+}
 /* USER CODE END 0 */
 
 /**
@@ -95,16 +114,33 @@ int main(void)
 
   /* USER CODE END 2 */
   LCD_Test();
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+  	uint8_t text[20];
+  	RTC_DateTypeDef sdatestructureget;
+  	RTC_TimeTypeDef stimestructureget;
+    while (1)
+    {
+      /* USER CODE END WHILE */
+
+      /* USER CODE BEGIN 3 */
+  		RTC_CalendarShow(&sdatestructureget,&stimestructureget);
+
+  		if (stimestructureget.Seconds % 2 == 1)
+  			sprintf((char *)&text,"Time: %02d:%02d", stimestructureget.Hours, stimestructureget.Minutes);
+  		else
+  			sprintf((char *)&text,"Time: %02d %02d", stimestructureget.Hours, stimestructureget.Minutes);
+  		LCD_ShowString(4, 58, 160, 16, 16, text);
+
+  		sprintf((char *)&text,"Tick: %d ms",HAL_GetTick());
+  		LCD_ShowString(4, 74, 160, 16, 16,text);
+
+  		LED_Blink(3,500);
+
+    }
+    /* USER CODE END 3 */
   }
-  /* USER CODE END 3 */
-}
 
 /**
   * @brief System Clock Configuration
