@@ -70,7 +70,7 @@ static void LED_Blink(uint32_t Hdelay,uint32_t Ldelay)
 
 static void RTC_CalendarShow(RTC_DateTypeDef *sdatestructureget,RTC_TimeTypeDef *stimestructureget)
 {
-  /* ±ØÐëÍ¬Ê±»ñÈ¡Ê±¼äºÍÈÕÆÚ ²»È»»áµ¼ÖÂÏÂ´ÎRTC²»ÄÜ¶ÁÈ¡ */
+  /* ±�?ÐëÍ¬Ê±»ñÈ¡Ê±¼äºÍÈÕÆÚ ²»È»»áµ¼ÖÂÏÂ´ÎRTC²»ÄÜ¶ÁÈ¡ */
   /* Both time and date must be obtained or RTC cannot be read next time */
   /* Get the RTC current Time */
   HAL_RTC_GetTime(&hrtc, stimestructureget, RTC_FORMAT_BIN);
@@ -111,20 +111,21 @@ int main(void)
   MX_SPI4_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
   LCD_Test();
+  /* USER CODE END 2 */
 
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   	uint8_t text[20];
   	RTC_DateTypeDef sdatestructureget;
   	RTC_TimeTypeDef stimestructureget;
     while (1)
     {
-      /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-      /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
+    	HAL_GPIO_WritePin(E3_GPIO_Port,GPIO_PIN_10,GPIO_PIN_RESET);
+
   		RTC_CalendarShow(&sdatestructureget,&stimestructureget);
 
   		if (stimestructureget.Seconds % 2 == 1)
@@ -139,8 +140,8 @@ int main(void)
   		LED_Blink(3,500);
 
     }
-    /* USER CODE END 3 */
-  }
+  /* USER CODE END 3 */
+}
 
 /**
   * @brief System Clock Configuration

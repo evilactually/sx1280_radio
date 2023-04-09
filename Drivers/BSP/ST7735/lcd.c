@@ -5,8 +5,9 @@
 
 //SPI��ʾ���ӿ�
 //LCD_RST
-#define LCD_RST_SET     
-#define LCD_RST_RESET  
+#define TFT96
+//#define LCD_RST_SET
+//#define LCD_RST_RESET
 //LCD_RS//dc  
 #define LCD_RS_SET      HAL_GPIO_WritePin(LCD_WR_RS_GPIO_Port,LCD_WR_RS_Pin,GPIO_PIN_SET)//PC4 
 #define LCD_RS_RESET    HAL_GPIO_WritePin(LCD_WR_RS_GPIO_Port,LCD_WR_RS_Pin,GPIO_PIN_RESET)
@@ -96,7 +97,7 @@ void LCD_Test(void)
 	}
 	LCD_Light(0, 300);
 
-	ST7735_LCD_Driver.FillRect(&st7735_pObj, 0, 0, ST7735Ctx.Width,ST7735Ctx.Height, BLACK);
+	ST7735_LCD_Driver.FillRect(&st7735_pObj, 0, 0, ST7735Ctx.Width,ST7735Ctx.Height, WHITE);
 
 	sprintf((char *)&text, "WeAct Studio");
 	LCD_ShowString(4, 4, ST7735Ctx.Width, 16, 16, text);
