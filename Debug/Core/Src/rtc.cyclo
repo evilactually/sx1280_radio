@@ -1,0 +1,3 @@
+rtc.c:30:6:MX_RTC_Init	4
+rtc.c:89:6:HAL_RTC_MspInit	3
+rtc.c:116:6:HAL_RTC_MspDeInit	2
