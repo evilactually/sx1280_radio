@@ -66,6 +66,8 @@ void Error_Handler(void);
 #define LCD_WR_RS_Pin GPIO_PIN_13
 #define LCD_WR_RS_GPIO_Port GPIOE
 
+#define TFT96
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
