@@ -44,6 +44,33 @@ ST7735_IO_t st7735_pIO = {
 ST7735_Object_t st7735_pObj;
 uint32_t st7735_id;
 
+void LCD_Init(void) {
+	#ifdef TFT96
+	ST7735Ctx.Orientation = ST7735_ORIENTATION_LANDSCAPE_ROT180;
+	ST7735Ctx.Panel = HannStar_Panel;
+	ST7735Ctx.Type = ST7735_0_9_inch_screen;
+	#elif TFT18
+	ST7735Ctx.Orientation = ST7735_ORIENTATION_PORTRAIT;
+	ST7735Ctx.Panel = BOE_Panel;
+	ST7735Ctx.Type = ST7735_1_8a_inch_screen;
+	#else
+	//error "Unknown Screen"
+
+	#endif
+
+	ST7735_RegisterBusIO(&st7735_pObj,&st7735_pIO);
+	ST7735_LCD_Driver.Init(&st7735_pObj,ST7735_FORMAT_RBG565,&ST7735Ctx);
+	ST7735_LCD_Driver.ReadID(&st7735_pObj,&st7735_id);
+
+	LCD_SetBrightness(0);
+
+	ST7735_LCD_Driver.FillRect(&st7735_pObj, 0, 0, ST7735Ctx.Width,ST7735Ctx.Height, BLACK);
+}
+
+void LCD_Clear(uint32_t color) {
+  	ST7735_LCD_Driver.FillRect(&st7735_pObj, 0, 0, ST7735Ctx.Width,ST7735Ctx.Height, color);
+}
+
 void LCD_Test(void)
 {
 	uint8_t text[20];
@@ -97,9 +124,9 @@ void LCD_Test(void)
 	}
 	LCD_Light(0, 300);
 
-	ST7735_LCD_Driver.FillRect(&st7735_pObj, 0, 0, ST7735Ctx.Width,ST7735Ctx.Height, WHITE);
+	ST7735_LCD_Driver.FillRect(&st7735_pObj, 0, 0, ST7735Ctx.Width,ST7735Ctx.Height, BLACK);
 
-	sprintf((char *)&text, "WeAct Studio");
+	sprintf((char *)&text, "Got STM32?");
 	LCD_ShowString(4, 4, ST7735Ctx.Width, 16, 16, text);
 	sprintf((char *)&text, "STM32H7xx 0x%X", HAL_GetDEVID());
 	LCD_ShowString(4, 22, ST7735Ctx.Width, 16, 16, text);
@@ -111,7 +138,7 @@ void LCD_Test(void)
 
 void LCD_SetBrightness(uint32_t Brightness)
 {
-	HAL_GPIO_WritePin(LCD_WR_RS_GPIO_Port,GPIO_PIN_10,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(LCD_WR_RS_GPIO_Port,GPIO_PIN_10,GPIO_PIN_RESET);
 	__HAL_TIM_SetCompare(LCD_Brightness_timer, LCD_Brightness_channel, Brightness);
 }
 

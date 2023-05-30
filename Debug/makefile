@@ -64,8 +64,8 @@ all: main-build
 main-build: LCD_Test.elf secondary-outputs
 
 # Tool invocations
-LCD_Test.elf LCD_Test.map: $(OBJS) $(USER_OBJS) C:\Users\vlads\STM32CubeIDE\workspace_1.12.0\LCD_Test\STM32H750VBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "LCD_Test.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\vlads\STM32CubeIDE\workspace_1.12.0\LCD_Test\STM32H750VBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LCD_Test.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+LCD_Test.elf LCD_Test.map: $(OBJS) $(USER_OBJS) /home/vlsh/STM32CubeIDE/workspace_1.12.1/LCD_Test/STM32H750VBTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "LCD_Test.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"/home/vlsh/STM32CubeIDE/workspace_1.12.1/LCD_Test/STM32H750VBTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="LCD_Test.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

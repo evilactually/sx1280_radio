@@ -77,6 +77,138 @@ static void RTC_CalendarShow(RTC_DateTypeDef *sdatestructureget,RTC_TimeTypeDef 
   /* Get the RTC current Date */
   HAL_RTC_GetDate(&hrtc, sdatestructureget, RTC_FORMAT_BIN);
 }
+
+uint8_t radio_spi(SPI_HandleTypeDef *hspi, const uint8_t *pData, uint16_t Size, uint32_t Timeout)
+{
+	uint8_t rxData[Size];
+	rxData[0] = 0;
+	HAL_SPI_TransmitReceive(hspi, pData, (uint8_t*)&rxData, Size, Timeout);
+	return rxData[0];
+}
+
+void radio_powerup()
+{
+	// Pull down NREST for 100ms and got to HIGH IMPEDENCE state to reset the radio
+	HAL_GPIO_WritePin(GPIOE, NRESET_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOE, NRESET_Pin, GPIO_PIN_RESET);
+	HAL_Delay(100);
+	HAL_GPIO_WritePin(GPIOE, NRESET_Pin, GPIO_PIN_SET);
+
+	HAL_Delay(100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+	uint8_t data[2] = {0x8a, 0x00}; // SetPacketType(GFSK)
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	uint8_t status = radio_spi(&hspi1, (uint8_t*)&data, 2, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+}
+
+void radio_cs(uint8_t cs) {
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, cs ? GPIO_PIN_RESET : GPIO_PIN_SET );
+}
+
+
+
+void radio_setup() {
+	uint8_t text[20];
+	HAL_Delay(1000);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+	// Set packet type to GFSK
+	uint8_t data[2] = {0x8a, 00}; // SetPacketType(GFSK)
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	uint8_t status = radio_spi(&hspi1, (uint8_t*)&data, 2, 1000);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+
+	//sprintf((char*)&text, "Hi!");
+	LCD_Clear(BLACK);
+	sprintf((char *)&text, "%x", status);
+	LCD_ShowString(4, 4, ST7735Ctx.Width, 16, 16, text);
+
+	return;
+
+	//LCD_ShowString(4, 4, ST7735Ctx.Width, 16, 3, (char*)&text);
+	HAL_Delay(1000);
+
+	HAL_Delay(100);
+	// Set 2.4 Ghz centre frequency
+	uint32_t rfFrequency = 12098954;
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&rfFrequency, 3, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+
+	HAL_Delay(100);
+	// Set buffer base address
+	uint8_t data2[3] = {0x8f, 00, 00};
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&data2, 3, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+
+	HAL_Delay(100);
+	// Set modulation parameters
+	uint8_t data3[4] = {0x8B, 0x04, 0x00, 00};
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&data3, 4, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+
+	HAL_Delay(100);
+	// Set packet type to GFSK
+	uint8_t data4[2] = {0x8A, 0x00};
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&data4, 2, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+
+	HAL_Delay(100);
+	// Set packet parameters
+	uint8_t data5[8] = {0x8C, 0x5, 0x00, 0x00, 0x00, 0x06, 0x00, 0x08};
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&data5, 8, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+
+}
+
+void radio_tx(uint8_t* buffer) {
+	HAL_Delay(100);
+	// Set buffer base address
+	uint8_t data[3] = {0x8f, 00, 00};
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&data, 3, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+
+	HAL_Delay(100);
+	// SetTxParams(power = -12 dBm, ramp_time = 2 us)
+	uint8_t data2[3] = {0x8E, 0x5, 0x00};
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&data2, 3, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+
+	HAL_Delay(100);
+	// Copy data to buffer with OP code prefix
+	uint8_t data3[8];
+	data3[0] = 0x1A; // WriteBuffer OP code prefix
+	data3[1] = 0x00;
+	data3[2] = buffer[0];
+	data3[3] = buffer[1];
+	data3[4] = buffer[2];
+	data3[5] = buffer[3];
+	data3[6] = buffer[4];
+	data3[7] = buffer[5];
+	//for (int i = 2; i < 8; ++i) {
+	//	data[i] = buffer[i-2];
+	//}
+
+	HAL_Delay(100);
+	// WriteBuffer
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&data3, 8, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+
+	HAL_Delay(100);
+	// SetTx(periodBase = 0 ms, timeout_duration = 0)
+	uint8_t data4[3] = {0x83, 0x00, 0x00};
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_RESET);
+	HAL_SPI_Transmit(&hspi1, (uint8_t*)&data4, 3, 100);
+	HAL_GPIO_WritePin(GPIOE, NSS_Pin, GPIO_PIN_SET);
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -85,6 +217,7 @@ static void RTC_CalendarShow(RTC_DateTypeDef *sdatestructureget,RTC_TimeTypeDef 
   */
 int main(void)
 {
+  uint8_t data[6] = {1, 2, 3, 5, 8, 13};
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -110,8 +243,12 @@ int main(void)
   MX_RTC_Init();
   MX_SPI4_Init();
   MX_TIM1_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  LCD_Test();
+  HAL_GPIO_WritePin(E3_GPIO_Port,GPIO_PIN_10,GPIO_PIN_RESET);
+  //LCD_Test();
+  LCD_Init();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -119,6 +256,19 @@ int main(void)
   	uint8_t text[20];
   	RTC_DateTypeDef sdatestructureget;
   	RTC_TimeTypeDef stimestructureget;
+
+  	// Initialize radio
+  	HAL_GPIO_WritePin(E3_GPIO_Port,GPIO_PIN_10,GPIO_PIN_RESET);
+  	radio_powerup();
+  	radio_setup();
+
+    //sprintf((char *)&text, "To seek is to find me...");
+    //LCD_ShowString(4, 4, ST7735Ctx.Width, 16, 16, text);
+  	while (1)
+  	{
+
+  		radio_setup();
+  	}
     while (1)
     {
     /* USER CODE END WHILE */
@@ -132,13 +282,15 @@ int main(void)
   			sprintf((char *)&text,"Time: %02d:%02d", stimestructureget.Hours, stimestructureget.Minutes);
   		else
   			sprintf((char *)&text,"Time: %02d %02d", stimestructureget.Hours, stimestructureget.Minutes);
-  		LCD_ShowString(4, 58, 160, 16, 16, text);
+  		//LCD_ShowString(x, y, width, height, size, p);
 
   		sprintf((char *)&text,"Tick: %d ms",HAL_GetTick());
   		LCD_ShowString(4, 74, 160, 16, 16,text);
 
   		LED_Blink(3,500);
 
+  		HAL_Delay(100);
+  		radio_tx((uint8_t*)&data);
     }
   /* USER CODE END 3 */
 }
